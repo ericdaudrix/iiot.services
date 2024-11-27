@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Mettre à jour le système
+echo "Mise à jour du système..."
+sudo apt update && sudo apt upgrade -y
+
+
+
+
+echo "Grafana  : $(systemctl is-active grafana-server.service)"
+echo "Grafana  : http://<adresse_ip>:3000"
