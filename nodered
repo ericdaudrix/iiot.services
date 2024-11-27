@@ -4,12 +4,6 @@
 echo "Mise à jour du système..."
 sudo apt update && sudo apt upgrade -y
 
-# Installer Cockpit
-echo "Installation de Cockpit..."
-sudo apt install -y cockpit
-sudo systemctl enable --now cockpit.socket
-echo "Cockpit installé et démarré."
-
 # Installer Node.js et Node-RED
 echo "Installation de Node.js et Node-RED..."
 curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash -
