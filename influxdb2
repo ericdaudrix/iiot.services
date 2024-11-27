@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# Mettre à jour le système
+echo "Mise à jour du système..."
+sudo apt update && sudo apt upgrade -y
+
