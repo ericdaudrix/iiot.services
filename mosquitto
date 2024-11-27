@@ -7,4 +7,11 @@ sudo apt update && sudo apt upgrade -y
 # install the Mosquitto Broker
 sudo apt install -y mosquitto mosquitto-clients
 
+# Configurer le fichier de service
+sudo systemctl daemon-reload
 sudo systemctl enable mosquitto.service
+sudo systemctl start mosquitto.service
+
+echo "Broker MQTT configuré"
+echo "Broker MQTT : $(systemctl is-active mosquitto.service)"
+echo "Broker MQTT : http://<adresse_ip>:1883"
