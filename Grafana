@@ -1,9 +1,16 @@
 #!/bin/bash
 
-# Mettre à jour le système
-echo "Mise à jour du système..."
-sudo apt update && sudo apt upgrade -y
 
+# Add the APT key used to authenticate packages:
+sudo mkdir -p /etc/apt/keyrings/
+wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
+
+# Add the Grafana APT repository
+echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
+
+# Install Grafana
+sudo apt-get update
+sudo apt-get install -y grafana
 
 
 
