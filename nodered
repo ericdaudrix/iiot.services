@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Mettre à jour le système
+echo "Mise à jour du système..."
+sudo apt update && sudo apt upgrade -y
+
+# Installer Cockpit
+echo "Installation de Cockpit..."
+sudo apt install -y cockpit
+sudo systemctl enable --now cockpit.socket
+echo "Cockpit installé et démarré."
+
+# Installer Node.js et Node-RED
+echo "Installation de Node.js et Node-RED..."
+curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+sudo npm install -g --unsafe-perm node-red
+echo "Node-RED installé."
+
+# Configurer Node-RED comme service système
+echo "Configuration de Node-RED comme service..."
+sudo bash -c 'cat <<EOF > /etc/systemd/system/nodered.service
+[Unit]
+Description=Node-RED
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+ExecStart=/usr/bin/env node-red
+Restart=on-failure
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
+EOF'
+
+# Activer et démarrer Node-RED
+sudo systemctl daemon-reload
+sudo systemctl enable nodered.service
+sudo systemctl start nodered.service
+echo "Node-RED configuré"
+echo "Node-RED : $(systemctl is-active nodered.service)"
+echo "Node-RED : http://<adresse_ip>:1880"
