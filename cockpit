@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Mettre à jour le système
+echo "Mise à jour du système..."
+sudo apt update && sudo apt upgrade -y
+
+# Installer Cockpit
+echo "Installation de Cockpit..."
+sudo apt install -y cockpit
+sudo systemctl enable --now cockpit.socket
+echo "Cockpit installé et démarré."
