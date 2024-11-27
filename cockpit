@@ -8,4 +8,7 @@ sudo apt update && sudo apt upgrade -y
 echo "Installation de Cockpit..."
 sudo apt install -y cockpit
 sudo systemctl enable --now cockpit.socket
-echo "Cockpit installé et démarré."
+echo "Cockpit installé"
+echo "Cockpit  : $(systemctl is-active cockpit.socket)"
+echo "Cockpit  : https://<adresse_ip>:9090"
+
