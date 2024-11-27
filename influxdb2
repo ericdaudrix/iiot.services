@@ -10,4 +10,12 @@ echo 'deb [signed-by=/etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg] https
 
 sudo apt-get update && sudo apt-get install influxdb2
 
+# Configurer le fichier de service
+sudo systemctl daemon-reload
+sudo systemctl enable influxdb.service
+sudo systemctl start influxdb.service
+echo "InfluxDB configuré"
+echo "InfluxDB : $(systemctl is-active influxdb.service)"
+echo "InfluxDB : http://<adresse_ip>:8086"
+
 
