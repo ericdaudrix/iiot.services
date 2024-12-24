@@ -37,28 +37,29 @@ sudo chown -R $NODE_RED_USER:$NODE_RED_USER $NODE_RED_DIR
 
 # === Obtenir le certificat SSL avec Certbot ===
 echo "🔐 Obtention du certificat SSL pour $DOMAIN..."
-sudo systemctl stop node-red || true
 sudo certbot certonly --standalone -d $DOMAIN --non-interactive --agree-tos -m admin@$DOMAIN
 
-# === Configuration de Node-RED ===
-echo "⚙️ Configuration de Node-RED..."
-sudo -u $NODE_RED_USER bash -c "cat > $NODE_RED_DIR/settings.js <<EOF
-module.exports = {
-    https: {
-        key: require('fs').readFileSync('$CERT_DIR/privkey.pem'),
-        cert: require('fs').readFileSync('$CERT_DIR/fullchain.pem')
-    },
-    requireHttps: true,
-    adminAuth: {
-        type: 'credentials',
-        users: [{
-            username: 'admin',
-            password: '$2y$10$Pm/DeL6oD6Y5Kz8H4u3F7ODqRxxt3SXmPzBIXedCMTG/1L88gWCDy',
-            permissions: '*'
-        }]
-    }
-};
-EOF"
+# === Gerer les permissions ===
+echo "🔐 Gestion des permissions..."
+
+sudo groupadd ssl-cert
+sudo usermod -aG ssl-cert $NODE_RED_USER
+
+sudo chgrp ssl-cert /etc/letsencrypt/live/$DOMAIN/*.pem
+sudo chmod 750 /etc/letsencrypt/live/$DOMAIN/*.pem
+sudo chgrp ssl-cert /etc/letsencrypt/archive/$DOMAIN/*.pem
+sudo chmod 750 /etc/letsencrypt/archive/$DOMAIN/*.pem
+
+sudo chgrp ssl-cert /etc/letsencrypt
+sudo chmod 750 /etc/letsencrypt
+sudo chgrp ssl-cert /etc/letsencrypt/live
+sudo chmod 750 /etc/letsencrypt/live
+sudo chgrp ssl-cert /etc/letsencrypt/archive
+sudo chmod 750 /etc/letsencrypt/archive
+sudo chgrp ssl-cert /etc/letsencrypt/live/$DOMAIN
+sudo chmod 750 /etc/letsencrypt/live/$DOMAIN
+sudo chgrp ssl-cert /etc/letsencrypt/archive/$DOMAIN
+sudo chmod 750 /etc/letsencrypt/archive/$DOMAIN
 
 # === Création du service systemd ===
 echo "🛠️ Configuration du service systemd Node-RED..."
@@ -69,11 +70,15 @@ After=network.target
 
 [Service]
 ExecStart=/usr/bin/env node-red
-WorkingDirectory=$NODE_RED_DIR
-User=$NODE_RED_USER
-Group=$NODE_RED_USER
+WorkingDirectory=/home/nodered/.node-red
+User=nodered
+Group=ssl-cert
+Environment="NODE_RED_ENABLE_PROJECTS=true"
+Environment="NODE_RED_ENABLE_SAFE_MODE=false"
 Restart=always
 Environment=NODE_OPTIONS=--max_old_space_size=256
+MemoryLimit=1G
+CPUQuota=100%
 
 [Install]
 WantedBy=multi-user.target
