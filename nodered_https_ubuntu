@@ -2,12 +2,12 @@
 
 # Script d'installation de Node-RED avec HTTPS sur Ubuntu 24.04
 # Auteur : E.Daudrix
-# Domaine : wp.daudrix.fr
+# Domaine : industrie40.daudrix.fr
 
 set -e
 
 # === Variables ===
-DOMAIN="wp.daudrix.fr"
+DOMAIN="industrie40.daudrix.fr"
 NODE_RED_USER="nodered"
 NODE_RED_DIR="/home/$NODE_RED_USER/.node-red"
 CERT_DIR="/etc/letsencrypt/live/$DOMAIN"
