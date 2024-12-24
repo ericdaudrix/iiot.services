@@ -1,0 +1,102 @@
+#!/bin/bash
+
+# Script d'installation de Node-RED avec HTTPS sur Ubuntu 24.04
+# Auteur : E.Daudrix
+# Domaine : wp.daudrix.fr
+
+set -e
+
+# === Variables ===
+DOMAIN="wp.daudrix.fr"
+NODE_RED_USER="nodered"
+NODE_RED_DIR="/home/$NODE_RED_USER/.node-red"
+CERT_DIR="/etc/letsencrypt/live/$DOMAIN"
+
+# === Mise à jour du système ===
+echo "🔄 Mise à jour du système..."
+sudo apt update && sudo apt upgrade -y
+
+# === Installation des dépendances ===
+echo "⚙️ Installation des dépendances..."
+sudo apt install -y nodejs npm certbot ufw
+
+# === Installation de Node.js LTS (20.x) ===
+echo "📦 Installation de Node.js..."
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# === Installation de Node-RED ===
+echo "🚀 Installation de Node-RED..."
+sudo npm install -g --unsafe-perm node-red
+
+# === Création de l'utilisateur Node-RED ===
+echo "👤 Création de l'utilisateur Node-RED..."
+sudo useradd -m -s /usr/sbin/nologin $NODE_RED_USER || echo "Utilisateur déjà existant."
+sudo mkdir -p $NODE_RED_DIR
+sudo chown -R $NODE_RED_USER:$NODE_RED_USER $NODE_RED_DIR
+
+# === Obtenir le certificat SSL avec Certbot ===
+echo "🔐 Obtention du certificat SSL pour $DOMAIN..."
+sudo systemctl stop node-red || true
+sudo certbot certonly --standalone -d $DOMAIN --non-interactive --agree-tos -m admin@$DOMAIN
+
+# === Configuration de Node-RED ===
+echo "⚙️ Configuration de Node-RED..."
+sudo -u $NODE_RED_USER bash -c "cat > $NODE_RED_DIR/settings.js <<EOF
+module.exports = {
+    https: {
+        key: require('fs').readFileSync('$CERT_DIR/privkey.pem'),
+        cert: require('fs').readFileSync('$CERT_DIR/fullchain.pem')
+    },
+    requireHttps: true,
+    adminAuth: {
+        type: 'credentials',
+        users: [{
+            username: 'admin',
+            password: '$2y$10$Pm/DeL6oD6Y5Kz8H4u3F7ODqRxxt3SXmPzBIXedCMTG/1L88gWCDy',
+            permissions: '*'
+        }]
+    }
+};
+EOF"
+
+# === Création du service systemd ===
+echo "🛠️ Configuration du service systemd Node-RED..."
+sudo bash -c "cat > /etc/systemd/system/node-red.service <<EOF
+[Unit]
+Description=Node-RED
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/env node-red
+WorkingDirectory=$NODE_RED_DIR
+User=$NODE_RED_USER
+Group=$NODE_RED_USER
+Restart=always
+Environment=NODE_OPTIONS=--max_old_space_size=256
+
+[Install]
+WantedBy=multi-user.target
+EOF"
+
+# === Démarrage et activation du service Node-RED ===
+echo "🚦 Démarrage et activation de Node-RED..."
+sudo systemctl daemon-reload
+sudo systemctl enable node-red
+sudo systemctl start node-red
+
+# === Pare-feu UFW ===
+echo "🛡️ Configuration du pare-feu UFW..."
+sudo ufw allow 1880
+sudo ufw allow 443
+sudo ufw reload
+
+# === Renouvellement automatique du certificat SSL ===
+echo "🔄 Automatisation du renouvellement SSL avec Cron..."
+(sudo crontab -l ; echo "0 3 * * * certbot renew --quiet && systemctl restart node-red") | sudo crontab -
+
+# === Afficher les informations finales ===
+echo "✅ Installation complète !"
+echo "Accédez à Node-RED via : https://$DOMAIN:1880"
+echo "Identifiants par défaut : admin/admin"
+echo "🔑 Pensez à sécuriser votre configuration Node-RED."
