@@ -105,3 +105,6 @@ echo "✅ Installation complète !"
 echo "Accédez à Node-RED via : https://$DOMAIN:1880"
 echo "Identifiants par défaut : admin/admin"
 echo "🔑 Pensez à sécuriser votre configuration Node-RED."
+echo "Modifier le fichier settings.js"
+echo $NODE_RED_DIR/settings.js
+echo le chemin vers les certificats est $CERT_DIR
