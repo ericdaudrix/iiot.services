@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Script d'installation de WordPress sur Ubuntu 24.04
+# Auteur : eric daudrix
+# Domaine : https://industrie40-daudrix.fr
+
+# Variables
+DOMAIN="industrie40-daudrix.fr"
+DB_NAME="wordpress_db"
+DB_USER="wp_user"
+DB_PASSWORD="pass4dbwordpress722446"
+WP_PATH="/var/www/$DOMAIN"
+
+# Mise à jour du système
+sudo apt update && sudo apt upgrade -y
+
+# Installation des prérequis
+sudo apt install -y apache2 mysql-server php libapache2-mod-php php-mysql php-curl php-gd php-mbstring php-xml php-xmlrpc wget unzip
+
+# Configuration de la base de données
+sudo mysql -e "CREATE DATABASE $DB_NAME;"
+sudo mysql -e "CREATE USER '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD';"
+sudo mysql -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';"
+sudo mysql -e "FLUSH PRIVILEGES;"
+
+# Installation de WordPress
+sudo mkdir -p $WP_PATH
+sudo wget -q https://wordpress.org/latest.tar.gz -O /tmp/wordpress.tar.gz
+sudo tar -xzf /tmp/wordpress.tar.gz -C $WP_PATH --strip-components=1
+sudo chown -R www-data:www-data $WP_PATH
+sudo chmod -R 755 $WP_PATH
+
+# Configuration Apache avec certificats existants
+sudo tee /etc/apache2/sites-available/$DOMAIN.conf > /dev/null <<EOL
+<VirtualHost *:80>
+    ServerAdmin admin@$DOMAIN
+    ServerName $DOMAIN
+    Redirect permanent / https://$DOMAIN/
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerAdmin admin@$DOMAIN
+    ServerName $DOMAIN
+    DocumentRoot $WP_PATH
+
+    <Directory $WP_PATH>
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/$DOMAIN/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/$DOMAIN/privkey.pem
+
+    ErrorLog \${APACHE_LOG_DIR}/$DOMAIN-error.log
+    CustomLog \${APACHE_LOG_DIR}/$DOMAIN-access.log combined
+</VirtualHost>
+EOL
+
+# Activation du site et des modules nécessaires
+sudo a2ensite $DOMAIN.conf
+sudo a2enmod rewrite ssl
+sudo systemctl restart apache2
+
+# Finalisation
+echo "Installation terminée. Accédez à https://$DOMAIN pour finaliser la configuration de WordPress."
