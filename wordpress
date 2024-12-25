@@ -2,13 +2,13 @@
 
 # Script d'installation de WordPress sur Ubuntu 24.04
 # Auteur : eric daudrix
-# Domaine : https://industrie40-daudrix.fr
+# Domaine : https://industrie40.daudrix.fr
 
 # Variables
 DOMAIN="industrie40-daudrix.fr"
 DB_NAME="wordpress_db"
 DB_USER="wp_user"
-DB_PASSWORD="pass4dbwordpress722446"
+DB_PASSWORD="password"
 WP_PATH="/var/www/$DOMAIN"
 
 # Mise à jour du système
