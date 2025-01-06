@@ -29,8 +29,6 @@ echo "aucun proxy configuré"
 exit
 fi
 
-touch npm-proxy.conf
-echo $request >> ~/npm-proxy.conf
 
 echo "export http_proxy=\""$request"\"" >> /home/pi/.profile
 echo "export https_proxy=\""$request"\"" >> /home/pi/.profile
