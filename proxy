@@ -1,0 +1,40 @@
+#!/bin/sh
+echo "Paramétrage du proxy du serveur Internet des objets connectés industriel"
+echo "Eric Daudrix - Lycée Monnerville - Cahors - CMQE de l'industrie du futur - Decazeville"
+echo "###########################################################"
+echo "# s'applique sur un serveur déployé sur un raspberry pi   #"
+echo "# avec un utilisateur nommé pi                            #"
+echo "###########################################################"
+echo
+read -p "adresse ip du proxy? "  ip
+read -p "port: " port
+read -p "login: " login
+read -p "password: " password
+
+request="http://"$login":"$password"@"$ip":"$port
+
+if [ $login ] 
+then 
+        request="http://"$login":"$password"@"$ip":"$port 
+else 
+        request="http://"$ip":"$port
+fi
+echo
+echo $request
+
+read -p "confirmer votre saisie? (oui/non) " confirm
+if [ $confirm = "non" ]
+then
+echo "aucun proxy configuré"
+exit
+fi
+
+touch npm-proxy.conf
+echo $request >> ~/npm-proxy.conf
+
+echo "export http_proxy=\""$request"\"" >> /home/pi/.profile
+echo "export https_proxy=\""$request"\"" >> /home/pi/.profile
+echo "export no_proxy=\"localhost,127.0.0.1\"" >> /home/pi/.profile
+. ~/.profile
+echo
+echo "proxy configuré"
