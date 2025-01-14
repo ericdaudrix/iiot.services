@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Script d'installation d'InfluxDB v1.8 en tant que service pour Raspberry Pi
 
 
