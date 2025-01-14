@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Script d'installation d'InfluxDB v1.8 en tant que service pour Raspberry Pi
+# Vérification des droits root
+if [ "$(id -u)" -ne 0 ]; then
+    echo "Ce script doit être exécuté en tant que root ou avec sudo."
+    exit 1
+fi
+
+echo "Mise à jour des paquets..."
+apt-get update && apt-get upgrade -y
+
+echo "Téléchargement du paquet InfluxDB v1.8..."
+wget https://dl.influxdata.com/influxdb/releases/influxdb-1.8.10_linux_armhf.tar.gz -O influxdb.tar.gz
+
+echo "Extraction des fichiers..."
+mkdir -p /opt/influxdb
+tar -xzf influxdb.tar.gz -C /opt/influxdb --strip-components=1
+
+echo "Nettoyage des fichiers temporaires..."
+rm influxdb.tar.gz
+
+echo "Création de l'utilisateur influxdb..."
+useradd -r -s /bin/false influxdb
+
+echo "Attribution des droits à l'utilisateur influxdb..."
+chown -R influxdb:influxdb /opt/influxdb
+
+echo "Création du fichier de service systemd pour InfluxDB..."
+cat <<EOF >/etc/systemd/system/influxdb.service
+[Unit]
+Description=InfluxDB Time Series Database
+After=network.target
+
+[Service]
+User=influxdb
+Group=influxdb
+ExecStart=/opt/influxdb/influxd
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+echo "Recharge des fichiers de configuration systemd..."
+systemctl daemon-reload
+
+echo "Activation et démarrage du service InfluxDB..."
+systemctl enable influxdb
+systemctl start influxdb
+
+echo "Vérification de l'état du service..."
+systemctl status influxdb
+
+echo "Installation terminée. InfluxDB est maintenant installé et exécuté en tant que service."
