@@ -1,28 +1,43 @@
 #!/bin/bash
-# Script d'installation d'InfluxDB v1.8 en tant que service pour Raspberry Pi
 
+set -e
 
-echo "Mise à jour des paquets..."
-sudo apt-get update && apt-get upgrade -y
+echo "Téléchargement d'InfluxDB v1.8.10 (ARMv7)..."
+wget https://dl.influxdata.com/influxdb/releases/influxdb-1.8.10_linux_armhf.tar.gz
 
-echo "Ajout du dépôt InfluxData..."
-wget -qO- https://repos.influxdata.com/influxdb.key | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/influxdb.gpg
+echo "Extraction..."
+tar xvf influxdb-1.8.10_linux_armhf.tar.gz
 
-source /etc/os-release
-echo "deb https://repos.influxdata.com/debian ${VERSION_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+echo "Installation dans /usr/local/bin..."
+sudo cp influxdb-1.8.10-1/influxd /usr/local/bin/
+sudo cp influxdb-1.8.10-1/influx /usr/local/bin/
+sudo chmod +x /usr/local/bin/influx*
 
-echo "Mise à jour des dépôts..."
-sudo apt update
+echo "Création du répertoire de données et config..."
+sudo mkdir -p /var/lib/influxdb
+sudo mkdir -p /etc/influxdb
 
-echo "Installation d'InfluxDB v1.8..."
-sudo apt install -y influxdb=1.11.8
+echo "Copie du fichier de configuration par défaut..."
+sudo cp influxdb-1.8.10-1/etc/influxdb.conf /etc/influxdb/influxdb.conf
 
-echo "Activation et démarrage du service InfluxDB..."
-sudo systemctl unmask influxdb
+echo "Création du service systemd..."
+sudo tee /etc/systemd/system/influxdb.service > /dev/null <<EOF
+[Unit]
+Description=InfluxDB 1.8 Time Series Database
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/influxd -config /etc/influxdb/influxdb.conf
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+echo "Activation du service..."
+sudo systemctl daemon-reload
 sudo systemctl enable influxdb
 sudo systemctl start influxdb
 
 echo "Vérification du statut du service..."
 sudo systemctl status influxdb --no-pager
-
-echo "Installation terminée. Test avec la commande : influx"
