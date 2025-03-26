@@ -11,24 +11,25 @@ wget -q "$URL"
 echo "Extraction..."
 tar -xzf "$ARCHIVE"
 
-# Trouver le dossier extrait (par précaution)
-FOLDER=$(tar -tzf "$ARCHIVE" | head -1 | cut -f1 -d"/")
+# Vérifie que les binaires existent
+if [[ ! -f usr/bin/influxd || ! -f usr/bin/influx ]]; then
+    echo "❌ Erreur : exécutables introuvables après extraction."
+    exit 1
+fi
 
-echo "Dossier extrait : $FOLDER"
-
-echo "Copie des exécutables dans /usr/local/bin..."
-sudo cp "$FOLDER/usr/bin/influxd" /usr/local/bin/
-sudo cp "$FOLDER/usr/bin/influx" /usr/local/bin/
+echo "✅ Exécutables trouvés : copie dans /usr/local/bin..."
+sudo cp usr/bin/influxd /usr/local/bin/
+sudo cp usr/bin/influx /usr/local/bin/
 sudo chmod +x /usr/local/bin/influx*
 
-echo "Création des répertoires de données et configuration..."
+echo "📁 Création des répertoires de données et configuration..."
 sudo mkdir -p /var/lib/influxdb
 sudo mkdir -p /etc/influxdb
 
-echo "Copie du fichier de configuration par défaut..."
-sudo cp "$FOLDER/etc/influxdb/influxdb.conf" /etc/influxdb/influxdb.conf
+echo "📄 Copie du fichier de configuration par défaut..."
+sudo cp etc/influxdb/influxdb.conf /etc/influxdb/influxdb.conf
 
-echo "Création du service systemd..."
+echo "⚙️ Création du service systemd..."
 sudo tee /etc/systemd/system/influxdb.service > /dev/null <<EOF
 [Unit]
 Description=InfluxDB 1.8 Time Series Database
@@ -42,10 +43,10 @@ Restart=on-failure
 WantedBy=multi-user.target
 EOF
 
-echo "Activation du service InfluxDB..."
+echo "🔁 Activation et démarrage du service..."
 sudo systemctl daemon-reload
 sudo systemctl enable influxdb
 sudo systemctl start influxdb
 
-echo "InfluxDB est installé. Statut du service :"
+echo "✅ Installation terminée ! Statut du service :"
 sudo systemctl status influxdb --no-pager
