@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 # Script d'installation d'InfluxDB 1.8.10 pour Raspberry Pi 4
 # Fonctionne pour Raspbian OS 32 bits (armhf) ou 64 bits (aarch64)
 
