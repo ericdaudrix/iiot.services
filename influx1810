@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# Script d'installation d'InfluxDB 1.8.10 pour Raspberry Pi 4
+# Fonctionne pour Raspbian OS 32 bits (armhf) ou 64 bits (aarch64)
+
+set -e
+
+echo "📦 Mise à jour du système..."
+sudo apt update && sudo apt upgrade -y
+
+echo "📁 Création d'un dossier temporaire..."
+cd ~
+mkdir -p influxdb_install
+cd influxdb_install
+
+ARCH=$(uname -m)
+
+if [[ "$ARCH" == "aarch64" ]]; then
+    ARCH_TYPE="arm64"
+elif [[ "$ARCH" == "armv7l" ]]; then
+    ARCH_TYPE="armhf"
+else
+    echo "❌ Architecture non supportée : $ARCH"
+    exit 1
+fi
+
+echo "🔽 Téléchargement d'InfluxDB v1.8.10 ($ARCH_TYPE)..."
+
+if [[ "$ARCH_TYPE" == "armhf" ]]; then
+    wget https://dl.influxdata.com/influxdb/releases/influxdb_1.8.10_armhf.deb
+    PACKAGE="influxdb_1.8.10_armhf.deb"
+else
+    wget https://dl.influxdata.com/influxdb/releases/influxdb_1.8.10_arm64.deb
+    PACKAGE="influxdb_1.8.10_arm64.deb"
+fi
+
+echo "📦 Installation du paquet..."
+sudo dpkg -i $PACKAGE
+
+echo "🛠️ Vérification des dépendances..."
+sudo apt --fix-broken install -y
+
+echo "🚀 Activation et démarrage du service InfluxDB..."
+sudo systemctl enable influxdb
+sudo systemctl start influxdb
+
+echo "✅ Installation terminée !"
+
+echo -e "\n📊 Test : InfluxDB devrait maintenant être accessible sur le port 8086."
+echo "Tapez la commande suivante pour vérifier :"
+echo "    influx"
