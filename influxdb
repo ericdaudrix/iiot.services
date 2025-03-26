@@ -2,20 +2,23 @@
 
 set -e
 
+ARCHIVE="influxdb-1.8.10_linux_armhf.tar.gz"
+URL="https://dl.influxdata.com/influxdb/releases/$ARCHIVE"
+
 echo "Téléchargement d'InfluxDB v1.8.10 (ARMv7)..."
-wget -q https://dl.influxdata.com/influxdb/releases/influxdb-1.8.10_linux_armhf.tar.gz
+wget -q "$URL"
 
 echo "Extraction..."
-tar -xzf influxdb-1.8.10_linux_armhf.tar.gz
+tar -xzf "$ARCHIVE"
 
-# Récupérer le nom du dossier extrait
-FOLDER=$(tar -tzf influxdb-1.8.10_linux_armhf.tar.gz | head -1 | cut -f1 -d"/")
+# Trouver le dossier extrait (par précaution)
+FOLDER=$(tar -tzf "$ARCHIVE" | head -1 | cut -f1 -d"/")
 
-echo "Installation depuis le dossier : $FOLDER"
+echo "Dossier extrait : $FOLDER"
 
 echo "Copie des exécutables dans /usr/local/bin..."
-sudo cp "$FOLDER/influxd" /usr/local/bin/
-sudo cp "$FOLDER/influx" /usr/local/bin/
+sudo cp "$FOLDER/usr/bin/influxd" /usr/local/bin/
+sudo cp "$FOLDER/usr/bin/influx" /usr/local/bin/
 sudo chmod +x /usr/local/bin/influx*
 
 echo "Création des répertoires de données et configuration..."
@@ -23,7 +26,7 @@ sudo mkdir -p /var/lib/influxdb
 sudo mkdir -p /etc/influxdb
 
 echo "Copie du fichier de configuration par défaut..."
-sudo cp "$FOLDER/etc/influxdb.conf" /etc/influxdb/influxdb.conf
+sudo cp "$FOLDER/etc/influxdb/influxdb.conf" /etc/influxdb/influxdb.conf
 
 echo "Création du service systemd..."
 sudo tee /etc/systemd/system/influxdb.service > /dev/null <<EOF
