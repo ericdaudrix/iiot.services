@@ -15,7 +15,7 @@ echo "Mise à jour des dépôts..."
 sudo apt update
 
 echo "Installation d'InfluxDB v1.8..."
-sudo apt install -y influxdb=1.8.*
+sudo apt install -y influxdb=1.11.8
 
 echo "Activation et démarrage du service InfluxDB..."
 sudo systemctl unmask influxdb
