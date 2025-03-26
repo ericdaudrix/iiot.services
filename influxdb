@@ -1,0 +1,28 @@
+#!/bin/bash
+# Script d'installation d'InfluxDB v1.8 en tant que service pour Raspberry Pi
+
+
+echo "Mise à jour des paquets..."
+sudo apt-get update && apt-get upgrade -y
+
+echo "Ajout du dépôt InfluxData..."
+wget -qO- https://repos.influxdata.com/influxdb.key | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/influxdb.gpg
+
+source /etc/os-release
+echo "deb https://repos.influxdata.com/debian ${VERSION_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+
+echo "Mise à jour des dépôts..."
+sudo apt update
+
+echo "Installation d'InfluxDB v1.8..."
+sudo apt install -y influxdb=1.8.*
+
+echo "Activation et démarrage du service InfluxDB..."
+sudo systemctl unmask influxdb
+sudo systemctl enable influxdb
+sudo systemctl start influxdb
+
+echo "Vérification du statut du service..."
+sudo systemctl status influxdb --no-pager
+
+echo "Installation terminée. Test avec la commande : influx"
