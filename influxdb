@@ -1,52 +1,51 @@
 #!/bin/bash
 
+# Script d'installation d'InfluxDB 1.8.10 pour Raspberry Pi 4
+# Fonctionne pour Raspbian OS 32 bits (armhf) ou 64 bits (aarch64)
+
 set -e
 
-ARCHIVE="influxdb-1.8.10_linux_armhf.tar.gz"
-URL="https://dl.influxdata.com/influxdb/releases/$ARCHIVE"
+echo "📦 Mise à jour du système..."
+sudo apt update && sudo apt upgrade -y
 
-echo "Téléchargement d'InfluxDB v1.8.10 (ARMv7)..."
-wget -q "$URL"
+echo "📁 Création d'un dossier temporaire..."
+cd ~
+mkdir -p influxdb_install
+cd influxdb_install
 
-echo "Extraction..."
-tar -xzf "$ARCHIVE"
+ARCH=$(uname -m)
 
-# Vérifie que les binaires existent
-if [[ ! -f usr/bin/influxd || ! -f usr/bin/influx ]]; then
-    echo "❌ Erreur : exécutables introuvables après extraction."
+if [[ "$ARCH" == "aarch64" ]]; then
+    ARCH_TYPE="arm64"
+elif [[ "$ARCH" == "armv7l" ]]; then
+    ARCH_TYPE="armhf"
+else
+    echo "❌ Architecture non supportée : $ARCH"
     exit 1
 fi
 
-echo "✅ Exécutables trouvés : copie dans /usr/local/bin..."
-sudo cp usr/bin/influxd /usr/local/bin/
-sudo cp usr/bin/influx /usr/local/bin/
-sudo chmod +x /usr/local/bin/influx*
+echo "🔽 Téléchargement d'InfluxDB v1.8.10 ($ARCH_TYPE)..."
 
-echo "📁 Création des répertoires de données et configuration..."
-sudo mkdir -p /var/lib/influxdb
-sudo mkdir -p /etc/influxdb
+if [[ "$ARCH_TYPE" == "armhf" ]]; then
+    wget https://dl.influxdata.com/influxdb/releases/influxdb_1.8.10_armhf.deb
+    PACKAGE="influxdb_1.8.10_armhf.deb"
+else
+    wget https://dl.influxdata.com/influxdb/releases/influxdb_1.8.10_arm64.deb
+    PACKAGE="influxdb_1.8.10_arm64.deb"
+fi
 
-echo "📄 Copie du fichier de configuration par défaut..."
-sudo cp etc/influxdb/influxdb.conf /etc/influxdb/influxdb.conf
+echo "📦 Installation du paquet..."
+sudo dpkg -i $PACKAGE
 
-echo "⚙️ Création du service systemd..."
-sudo tee /etc/systemd/system/influxdb.service > /dev/null <<EOF
-[Unit]
-Description=InfluxDB 1.8 Time Series Database
-After=network.target
+echo "🛠️ Vérification des dépendances..."
+sudo apt --fix-broken install -y
 
-[Service]
-ExecStart=/usr/local/bin/influxd -config /etc/influxdb/influxdb.conf
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-echo "🔁 Activation et démarrage du service..."
-sudo systemctl daemon-reload
+echo "🚀 Activation et démarrage du service InfluxDB..."
 sudo systemctl enable influxdb
 sudo systemctl start influxdb
 
-echo "✅ Installation terminée ! Statut du service :"
-sudo systemctl status influxdb --no-pager
+echo "✅ Installation terminée !"
+
+echo -e "\n📊 Test : InfluxDB devrait maintenant être accessible sur le port 8086."
+echo "Tapez la commande suivante pour vérifier :"
+echo "    influx"
