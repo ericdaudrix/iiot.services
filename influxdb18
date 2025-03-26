@@ -22,7 +22,7 @@ echo "Attribution des droits à l'utilisateur influxdb..."
 sudo chown -R influxdb:influxdb /opt/influxdb
 
 echo "Création du fichier de service systemd pour InfluxDB..."
-sudo cat <<EOF >/etc/systemd/system/influxdb.service
+sudo tee /etc/systemd/system/influxdb.service > /dev/null <<EOF
 [Unit]
 Description=InfluxDB Time Series Database
 After=network.target
