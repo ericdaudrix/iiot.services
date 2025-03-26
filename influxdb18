@@ -5,47 +5,24 @@
 echo "Mise à jour des paquets..."
 sudo apt-get update && apt-get upgrade -y
 
-echo "Téléchargement du paquet InfluxDB v1.8..."
-sudo wget https://dl.influxdata.com/influxdb/releases/influxdb-1.8.10_linux_armhf.tar.gz -O influxdb.tar.gz
+echo "Ajout du dépôt InfluxData..."
+wget -qO- https://repos.influxdata.com/influxdb.key | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/influxdb.gpg
 
-echo "Extraction des fichiers..."
-sudo mkdir -p /opt/influxdb
-sudo tar -xzf influxdb.tar.gz -C /opt/influxdb --strip-components=1
+source /etc/os-release
+echo "deb https://repos.influxdata.com/debian ${VERSION_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
 
-echo "Nettoyage des fichiers temporaires..."
-sudo rm influxdb.tar.gz
+echo "Mise à jour des dépôts..."
+sudo apt update
 
-echo "Création de l'utilisateur influxdb..."
-sudo useradd -r -s /bin/false influxdb
-
-echo "Attribution des droits à l'utilisateur influxdb..."
-sudo chown -R influxdb:influxdb /opt/influxdb
-
-echo "Création du fichier de service systemd pour InfluxDB..."
-sudo tee /etc/systemd/system/influxdb.service > /dev/null <<EOF
-[Unit]
-Description=InfluxDB Time Series Database
-After=network.target
-
-[Service]
-User=influxdb
-Group=influxdb
-ExecStart=/opt/influxdb/influxd
-Restart=on-failure
-LimitNOFILE=65536
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-echo "Recharge des fichiers de configuration systemd..."
-sudo systemctl daemon-reload
+echo "Installation d'InfluxDB v1.8..."
+sudo apt install -y influxdb=1.8.*
 
 echo "Activation et démarrage du service InfluxDB..."
+sudo systemctl unmask influxdb
 sudo systemctl enable influxdb
 sudo systemctl start influxdb
 
-sudo echo "Vérification de l'état du service..."
-sudo systemctl status influxdb
+echo "Vérification du statut du service..."
+sudo systemctl status influxdb --no-pager
 
-echo "Installation terminée. InfluxDB est maintenant installé et exécuté en tant que service."
+echo "Installation terminée. Test avec la commande : influx"
