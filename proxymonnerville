@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Configuration du proxy
+PROXY_IP="10.255.4.204"
+PROXY_PORT="3128"
+PROXY_URL="http://$PROXY_IP:$PROXY_PORT"
+
+echo "Configuration du proxy sur $PROXY_URL"
+
+# 1. Configurer le proxy pour bash (session courante + future)
+echo "Export des variables d'environnement dans ~/.bashrc"
+echo -e "\n# Proxy settings" >> ~/.bashrc
+echo "export http_proxy=\"$PROXY_URL\"" >> ~/.bashrc
+echo "export https_proxy=\"$PROXY_URL\"" >> ~/.bashrc
+echo "export ftp_proxy=\"$PROXY_URL\"" >> ~/.bashrc
+echo "export no_proxy=\"localhost,127.0.0.1\"" >> ~/.bashrc
+
+# Appliquer les variables immédiatement
+export http_proxy="$PROXY_URL"
+export https_proxy="$PROXY_URL"
+export ftp_proxy="$PROXY_URL"
+export no_proxy="localhost,127.0.0.1"
+
+# 2. Configurer le proxy pour APT
+echo "Configuration du proxy pour apt..."
+echo "Acquire::http::Proxy \"$PROXY_URL\";" | sudo tee /etc/apt/apt.conf.d/01proxy
+
+# 3. (Facultatif) Configuration globale pour tous les services
+echo "Configuration globale (/etc/environment)..."
+sudo bash -c "echo -e '\n# Proxy settings' >> /etc/environment"
+sudo bash -c "echo 'http_proxy=\"$PROXY_URL\"' >> /etc/environment"
+sudo bash -c "echo 'https_proxy=\"$PROXY_URL\"' >> /etc/environment"
+sudo bash -c "echo 'ftp_proxy=\"$PROXY_URL\"' >> /etc/environment"
+sudo bash -c "echo 'no_proxy=\"localhost,127.0.0.1\"' >> /etc/environment"
+
+echo "✅ Proxy configuré. Redémarre le terminal ou exécute 'source ~/.bashrc' pour appliquer les changements."
