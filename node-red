@@ -1,0 +1,35 @@
+#!/bin/bash
+
+echo "Installation de Node.js via 'n' (sans NodeSource)..."
+sudo apt update
+sudo apt install -y npm build-essential git curl
+sudo npm install -g n
+sudo n stable
+
+echo "Installation de Node-RED..."
+sudo npm install -g --unsafe-perm node-red
+
+echo "Création du service systemd..."
+sudo cp ~/.npm-global/lib/node_modules/node-red/packages/node_modules/node-red/red.js /usr/bin/node-red
+sudo chmod +x /usr/bin/node-red
+sudo bash -c 'cat > /etc/systemd/system/nodered.service <<EOF
+[Unit]
+Description=Node-RED
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/env node-red
+Restart=on-failure
+User=pi
+Group=pi
+Environment="NODE_OPTIONS=--max_old_space_size=256"
+
+[Install]
+WantedBy=multi-user.target
+EOF'
+
+sudo systemctl daemon-reexec
+sudo systemctl enable nodered
+sudo systemctl start nodered
+
+echo "Node-RED est installé ! Accès via : http://<IP_RPI>:1880"
